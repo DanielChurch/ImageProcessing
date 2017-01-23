@@ -11,6 +11,13 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -22,6 +29,8 @@ import java.awt.image.MemoryImageSource;
 import java.awt.image.PixelGrabber;
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -58,6 +67,10 @@ class IMP {
 
 	// your 2D array of pixels
 	private int picture[][];
+	
+	private LinkedList<Image> history;
+	private int historySize = 10;
+	private int historyIndex = 0;
 
 	private int mouseX, mouseY;
 
@@ -66,6 +79,7 @@ class IMP {
 	 * pulldown menu is how you will open an image to manipulate.
 	 */
 	public IMP() {
+		history = new LinkedList<Image>();
 		toolkit = Toolkit.getDefaultToolkit();
 		frame = new JFrame("Image Processing Software by Hunter");
 		JMenuBar bar = new JMenuBar();
@@ -163,6 +177,31 @@ class IMP {
 		file.add(resetItem);
 		file.add(exitItem);
 		bar.add(file);
+		
+		JMenu edit = new JMenu("Edit");
+		bar.add(edit);
+		
+		edit.add(menuFunction("Undo", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if(historyIndex >= historySize)
+					return;
+				historyIndex++;
+				setPicture(history.get(history.size()-historyIndex));
+			}
+		}));
+		
+		edit.add(menuFunction("Redo", new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				if(historyIndex <= 0)
+					return;
+				historyIndex--;
+				setPicture(history.get(history.size()-historyIndex));
+			}
+		}));
+		
+		
 		bar.add(functions);
 		frame.setSize(600, 600);
 		mp = new JPanel();
@@ -187,6 +226,43 @@ class IMP {
 		frame.setVisible(true);
 
 		label = new JLabel("", SwingUtilities.CENTER);
+		label.setDropTarget(new DropTarget(frame, new DropTargetListener() {
+			
+			@Override
+			public void dropActionChanged(DropTargetDragEvent arg0) {}
+			
+			@Override
+			public void drop(DropTargetDropEvent arg0) {
+				 Transferable transferable = arg0.getTransferable();
+	                if (arg0.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+	                    arg0.acceptDrop(arg0.getDropAction());
+	                    try {
+	                        List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+	                        if (transferData != null && transferData.size() > 0) {
+	                            for(Object f : transferData)
+	                            	if(f instanceof File){
+	                            		loadImage((File)f);
+	                            	}
+	                            	arg0.dropComplete(true);
+	                        }
+
+	                    } catch (Exception ex) {
+	                        ex.printStackTrace();
+	                    }
+	                } else {
+	                    arg0.rejectDrop();
+	                }
+			}
+			
+			@Override
+			public void dragOver(DropTargetDragEvent arg0) {}
+			
+			@Override
+			public void dragExit(DropTargetEvent arg0) {}
+			
+			@Override
+			public void dragEnter(DropTargetDragEvent arg0) {}
+		}));
 		label.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent m) {
@@ -222,6 +298,7 @@ class IMP {
 				mouseY = me.getY();
 			}
 		});
+		mp.add(label, BorderLayout.CENTER);
 	}
 
 	/*
@@ -275,7 +352,7 @@ class IMP {
 			}
 		}));
 
-		fun.add(menuFunction("Rotate 90°", new ActionListener() {
+		fun.add(menuFunction("Rotate 90ï¿½", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent evt) {
 				int[][] temp = picture;
@@ -678,20 +755,24 @@ class IMP {
 			if (filename == null)
 				return;
 			else {
-				pic = new File(fd.getDirectory() + "\\" + fd.getFile());
-				img = new ImageIcon(pic.getPath());
-				System.out.println(pic.getPath());
+				loadImage(new File(fd.getDirectory() + "\\" + fd.getFile()));
 			}
 		} else {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setCurrentDirectory(new File("C:\\Users\\Dan\\Dropbox\\"));
 			int option = chooser.showOpenDialog(frame);
 			if (option == JFileChooser.APPROVE_OPTION) {
-				pic = chooser.getSelectedFile();
-				img = new ImageIcon(pic.getPath());
+				loadImage(chooser.getSelectedFile());
 			} else
 				return;
 		}
+		
+	}
+	
+	private void loadImage(File path){
+		pic = path;
+		img = new ImageIcon(pic.getPath());
+		
 		initWidth = width = img.getIconWidth();
 		initHeight = height = img.getIconHeight();
 
@@ -713,8 +794,6 @@ class IMP {
 		for (int i = 0; i < width * height; i++)
 			results[i] = pixels[i];
 		turnTwoDimensional();
-		mp.removeAll();
-		mp.add(label, BorderLayout.CENTER);
 
 		mp.revalidate();
 	}
@@ -762,7 +841,30 @@ class IMP {
 				pixels[i * width + j] = picture[i][j];
 		Image img2 = toolkit.createImage(new MemoryImageSource(width, height, pixels, 0, width));
 
+		if(history.size() <= historySize)
+			history.add(img2);
+		else {
+			history.removeFirst();
+			history.add(img2);
+		}
+		
 		label.setIcon(new ImageIcon(img2));
+		mp.revalidate();
+	}
+	
+	private void setPicture (Image img){
+		
+		PixelGrabber pg = new PixelGrabber(img, 0, 0, width, height, pixels, 0, width);
+		try {
+			pg.grabPixels();
+		} catch (InterruptedException e) {
+			System.err.println("Interrupted waiting for pixels");
+			return;
+		}
+		turnTwoDimensional();
+		
+		
+		label.setIcon(new ImageIcon(img));
 		mp.revalidate();
 	}
 
