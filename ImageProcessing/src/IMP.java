@@ -6,7 +6,9 @@
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Rectangle;
@@ -67,7 +69,7 @@ class IMP {
 
 	// your 2D array of pixels
 	private int picture[][];
-	
+
 	private LinkedList<Image> history;
 	private int historySize = 10;
 	private int historyIndex = 0;
@@ -81,7 +83,7 @@ class IMP {
 	public IMP() {
 		history = new LinkedList<Image>();
 		toolkit = Toolkit.getDefaultToolkit();
-		frame = new JFrame("Image Processing Software by Hunter");
+		frame = new JFrame("Image Processing Software by Hunter Edited by Daniel Church");
 		JMenuBar bar = new JMenuBar();
 		JMenu file = new JMenu("File");
 		JMenu functions = getFunctions();
@@ -91,10 +93,14 @@ class IMP {
 				quit();
 			}
 		});
-		
-		JMenuItem neww = new JMenuItem("New");//does nothing atm
+
+		JMenuItem neww = new JMenuItem("New");// does nothing atm
+		neww.addActionListener((ActionEvent ae) -> {
+			label.setText("Drop an Image");
+			label.setIcon(null);
+		});
 		file.add(neww);
-		
+
 		openItem = new JMenuItem("Open");
 		openItem.addActionListener(new ActionListener() {
 			@Override
@@ -103,14 +109,14 @@ class IMP {
 			}
 		});
 		file.add(openItem);
-		
+
 		JMenuItem save = new JMenuItem("Save");
 		file.add(save);
 		save.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Image currentImage = toolkit.createImage(new MemoryImageSource(width, height, pixels, 0, width));
-				
+
 				if (System.getProperty("os.name").toLowerCase().contains("windows")) {
 					FileDialog fd = new FileDialog(frame, "Choose a file", FileDialog.SAVE);
 					fd.setDirectory("C:\\Users\\Dan\\Dropbox\\rendered\\");
@@ -120,16 +126,17 @@ class IMP {
 						return;
 					else {
 						BufferedImage bi = null;
-						if(fd.getFile().toLowerCase().contains("jpg") || !fd.getFile().contains("."))
+						if (fd.getFile().toLowerCase().contains("jpg") || !fd.getFile().contains("."))
 							bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-						else //Assume allowance of transparency
+						else // Assume allowance of transparency
 							bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 						Graphics2D g = (Graphics2D) bi.getGraphics();
 						g.drawImage(currentImage, 0, 0, null);
 						g.dispose();
-						
+
 						try {
-							ImageIO.write(bi, "JPG", new File(fd.getDirectory() + "\\" + fd.getFile() + (!fd.getFile().contains(".") ? ".jpg" : "")));
+							ImageIO.write(bi, "JPG", new File(fd.getDirectory() + "\\" + fd.getFile()
+									+ (!fd.getFile().contains(".") ? ".jpg" : "")));
 						} catch (IOException e1) {
 							e1.printStackTrace();
 						}
@@ -139,16 +146,17 @@ class IMP {
 					chooser.setCurrentDirectory(new File("C:\\Users\\Dan\\Dropbox\\"));
 					int option = chooser.showOpenDialog(frame);
 					if (option == JFileChooser.APPROVE_OPTION) {
-						
+
 						BufferedImage bi = null;
-						if(chooser.getSelectedFile().getPath().toLowerCase().contains("jpg") || !chooser.getSelectedFile().getPath().contains("."))
+						if (chooser.getSelectedFile().getPath().toLowerCase().contains("jpg")
+								|| !chooser.getSelectedFile().getPath().contains("."))
 							bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-						else //Assume allowance of transparency
+						else // Assume allowance of transparency
 							bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 						Graphics2D g = (Graphics2D) bi.getGraphics();
 						g.drawImage(currentImage, 0, 0, null);
 						g.dispose();
-						
+
 						try {
 							ImageIO.write(bi, "JPG", chooser.getSelectedFile());
 						} catch (IOException e1) {
@@ -173,35 +181,34 @@ class IMP {
 				quit();
 			}
 		});
-		
+
 		file.add(resetItem);
 		file.add(exitItem);
 		bar.add(file);
-		
+
 		JMenu edit = new JMenu("Edit");
 		bar.add(edit);
-		
+
 		edit.add(menuFunction("Undo", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if(historyIndex >= historySize)
+				if (historyIndex >= historySize)
 					return;
 				historyIndex++;
-				setPicture(history.get(history.size()-historyIndex));
+				setPicture(history.get(history.size() - historyIndex));
 			}
 		}));
-		
+
 		edit.add(menuFunction("Redo", new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				if(historyIndex <= 0)
+				if (historyIndex <= 0)
 					return;
 				historyIndex--;
-				setPicture(history.get(history.size()-historyIndex));
+				setPicture(history.get(history.size() - historyIndex));
 			}
 		}));
-		
-		
+
 		bar.add(functions);
 		frame.setSize(600, 600);
 		mp = new JPanel();
@@ -225,43 +232,43 @@ class IMP {
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 
-		label = new JLabel("", SwingUtilities.CENTER);
+		label = new JLabel("Drop an Image", SwingUtilities.CENTER);
 		label.setDropTarget(new DropTarget(frame, new DropTargetListener() {
-			
+
 			@Override
-			public void dropActionChanged(DropTargetDragEvent arg0) {}
-			
+			public void dropActionChanged(DropTargetDragEvent arg0) { }
+
 			@Override
 			public void drop(DropTargetDropEvent arg0) {
-				 Transferable transferable = arg0.getTransferable();
-	                if (arg0.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-	                    arg0.acceptDrop(arg0.getDropAction());
-	                    try {
-	                        List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-	                        if (transferData != null && transferData.size() > 0) {
-	                            for(Object f : transferData)
-	                            	if(f instanceof File){
-	                            		loadImage((File)f);
-	                            	}
-	                            	arg0.dropComplete(true);
-	                        }
+				Transferable transferable = arg0.getTransferable();
+				if (arg0.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+					arg0.acceptDrop(arg0.getDropAction());
+					try {
+						List transferData = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+						if (transferData != null && transferData.size() > 0) {
+							for (Object f : transferData)
+								if (f instanceof File) {
+									loadImage((File) f);
+								}
+							arg0.dropComplete(true);
+						}
 
-	                    } catch (Exception ex) {
-	                        ex.printStackTrace();
-	                    }
-	                } else {
-	                    arg0.rejectDrop();
-	                }
+					} catch (Exception ex) {
+						ex.printStackTrace();
+					}
+				} else {
+					arg0.rejectDrop();
+				}
 			}
-			
+
 			@Override
-			public void dragOver(DropTargetDragEvent arg0) {}
-			
+			public void dragOver(DropTargetDragEvent arg0) { }
+
 			@Override
-			public void dragExit(DropTargetEvent arg0) {}
-			
+			public void dragExit(DropTargetEvent arg0) { }
+
 			@Override
-			public void dragEnter(DropTargetDragEvent arg0) {}
+			public void dragEnter(DropTargetDragEvent arg0) { }
 		}));
 		label.addMouseListener(new MouseAdapter() {
 			@Override
@@ -286,12 +293,12 @@ class IMP {
 				int dy = mouseY - me.getY();
 
 				JViewport viewPort = (JViewport) SwingUtilities.getAncestorOfClass(JViewport.class, mp);
-				if(viewPort != null){
+				if (viewPort != null) {
 					Rectangle view = viewPort.getViewRect();
-                    view.x += dx;
-                    view.y += dy;
-                    
-                    mp.scrollRectToVisible(view);
+					view.x += dx;
+					view.y += dy;
+
+					mp.scrollRectToVisible(view);
 				}
 
 				mouseX = me.getX();
@@ -310,324 +317,286 @@ class IMP {
 	private JMenu getFunctions() {
 		JMenu fun = new JMenu("Functions");
 
-		fun.add(menuFunction("MyExample - fun1 method", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++) {
-						int rgbArray[] = new int[4];
+		fun.add(menuFunction("MyExample - fun1 method", (ActionEvent ae) -> {
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++) {
+					int rgbArray[] = new int[4];
 
-						// get three ints for R, G and B
-						rgbArray = getPixelArray(picture[i][j]);
-						
-						rgbArray[1] = 0;
-						// take three ints for R, G, B and put them back into a
-						// single
-						// int
-						picture[i][j] = getPixels(rgbArray);
-					}
-				resetPicture();
-			}
-		}));
-		
-		fun.add(menuFunction("Invert", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++) {
-						int rgbArray[] = new int[4];
+					// get three ints for R, G and B
+					rgbArray = getPixelArray(picture[i][j]);
 
-						// get three ints for R, G and B
-						rgbArray = getPixelArray(picture[i][j]);
-						
-						rgbArray[1] = 255 - rgbArray[1];
-						rgbArray[2] = 255 - rgbArray[2];
-						rgbArray[3] = 255 - rgbArray[3];
-						// take three ints for R, G, B and put them back into a
-						// single
-						// int
-						picture[i][j] = getPixels(rgbArray);
-					}
-				resetPicture();
-			}
+					rgbArray[1] = 0;
+					// take three ints for R, G, B and put them back into a
+					// single
+					// int
+					picture[i][j] = getPixels(rgbArray);
+				}
+			resetPicture();
 		}));
 
-		fun.add(menuFunction("Rotate 90�", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				int[][] temp = picture;
-				picture = new int[width][height];
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						picture[j][i] = temp[i][j];
-				width = height;
-				height = picture.length;
-				resetPicture();
-			}
+		fun.add(menuFunction("Invert", (ActionEvent ae) -> {
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++) {
+					int rgbArray[] = new int[4];
+
+					// get three ints for R, G and B
+					rgbArray = getPixelArray(picture[i][j]);
+
+					rgbArray[1] = 255 - rgbArray[1];
+					rgbArray[2] = 255 - rgbArray[2];
+					rgbArray[3] = 255 - rgbArray[3];
+					// take three ints for R, G, B and put them back into a
+					// single
+					// int
+					picture[i][j] = getPixels(rgbArray);
+				}
+			resetPicture();
+		}));
+
+		fun.add(menuFunction("Rotate 90", (ActionEvent ae) -> {
+			int[][] temp = picture;
+			picture = new int[width][height];
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					picture[j][i] = temp[height-1-i][j];
+			width = height;
+			height = picture.length;
+			resetPicture();
 		}));
 
 		JMenu grayscale = new JMenu("Grayscale");
 		fun.add(grayscale);
 
-		grayscale.add(menuFunction("Average", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
+		grayscale.add(menuFunction("Average",(ActionEvent ae) -> {
 				for (int i = 0; i < height; i++)
 					for (int j = 0; j < width; j++) {
 						int[] tempArray = getPixelArray(picture[i][j]);
-						int grayscale = (int) (tempArray[1] * 1f / 3 + tempArray[2] * 1f / 3 + tempArray[3] * 1f / 3);
+						int value = (int) (tempArray[1] * 1f / 3 + tempArray[2] * 1f / 3 + tempArray[3] * 1f / 3);
 						for (int k = 1; k < tempArray.length; k++)
-							tempArray[k] = grayscale;
+							tempArray[k] = value;
 						picture[i][j] = getPixels(tempArray);
 					}
 				resetPicture();
-			}
 		}));
 
-		grayscale.add(menuFunction("Min & Max", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++) {
-						int[] tempArray = getPixelArray(picture[i][j]);
-						int grayscale = (int) (min(tempArray) / 2f + max(tempArray) / 2f);
-						for (int k = 1; k < tempArray.length; k++)
-							tempArray[k] = grayscale;
-						picture[i][j] = getPixels(tempArray);
-					}
-				resetPicture();
-			}
+		grayscale.add(menuFunction("Min & Max", (ActionEvent ae) -> {
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++) {
+					int[] tempArray = getPixelArray(picture[i][j]);
+					int value = (int) (min(tempArray) / 2f + max(tempArray) / 2f);
+					for (int k = 1; k < tempArray.length; k++)
+						tempArray[k] = value;
+					picture[i][j] = getPixels(tempArray);
+				}
+			resetPicture();
 		}));
 
-		grayscale.add(menuFunction("Luminocity", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
+		grayscale.add(menuFunction("Luminocity", (ActionEvent ae) -> {
+			luminocity();
+		}));
+
+		JMenu edgeDetection = new JMenu("Edge Detection");
+		fun.add(edgeDetection);
+
+		edgeDetection.add(menuFunction("Edge Detection", (ActionEvent ae) -> {
+			float[][] mask = new float[][] { { -1, -1, -1, -1, -1 }, { -1, 0, 0, 0, -1 }, { -1, 0, 16, 0, -1 },
+					{ -1, 0, 0, 0, -1 }, { -1, -1, -1, -1, -1 } };
+
 				luminocity();
-			}
+				detectEdges(mask);
+				resetPicture();
 		}));
 
-		fun.add(menuFunction("Edge Detection", new ActionListener() {
-			private int[][] mask = new int[][] { { -1, -1, -1 }, { -1, 8, -1 }, { -1, -1, -1 } };
-
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				luminocity();
-				int[][] temp = new int[picture.length][picture[0].length];
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						temp[i][j] = picture[i][j];
-
-				for (int i = 1; i < height - 1; i++)
-					for (int j = 1; j < width - 1; j++) {
-						int color = temp[i][j] * mask[1][1] + temp[i - 1][j] * mask[1 - 1][1]
-								+ temp[i][j - 1] * mask[1][1 - 1] + temp[i - 1][j - 1] * mask[1 - 1][1 - 1]
-								+ temp[i + 1][j] * mask[1 + 1][1] + temp[i][j + 1] * mask[1][1 + 1]
-								+ temp[i + 1][j + 1] * mask[1 + 1][1 + 1] + temp[i - 1][j + 1] * mask[1 - 1][1 + 1]
-								+ temp[i + 1][j - 1] * mask[1 + 1][1 - 1];
-						picture[i][j] = color;
-					}
-				resetPicture();
-			}
+		edgeDetection.add(menuFunction("Sobel", (ActionEvent ae) -> {
+			sobel();
+			resetPicture();
 		}));
 
-		fun.add(menuFunction("Sobel", new ActionListener() {
+		edgeDetection.add(menuFunction("Colored Sobel", (ActionEvent ae) -> {
+			float[][] horizontalMask = new float[][] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
+			float[][] verticalMask = new float[][] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+			luminocity();
+			int[][] temp = new int[picture.length][picture[0].length];
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					temp[i][j] = getPixelArray(picture[i][j])[1];
 
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				sobel();
-				resetPicture();
-			}
-		}));
-		
-		fun.add(menuFunction("Colored Sobel", new ActionListener() {
-			private float[][] horizontalMask = new float[][] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
-			private float[][] verticalMask = new float[][] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+			for (int i = 1; i < height - 1; i++)
+				for (int j = 1; j < width - 1; j++) {
+					int colorX = (int) (temp[i][j] * horizontalMask[1][1]
+							+ temp[i - 1][j] * horizontalMask[1 - 1][1] + temp[i][j - 1] * horizontalMask[1][1 - 1]
+							+ temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
+							+ temp[i + 1][j] * horizontalMask[1 + 1][1] + temp[i][j + 1] * horizontalMask[1][1 + 1]
+							+ temp[i + 1][j + 1] * horizontalMask[1 + 1][1 + 1]
+							+ temp[i - 1][j + 1] * horizontalMask[1 - 1][1 + 1]
+							+ temp[i + 1][j - 1] * horizontalMask[1 + 1][1 - 1]);
 
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				luminocity();
-				int[][] temp = new int[picture.length][picture[0].length];
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						temp[i][j] = getPixelArray(picture[i][j])[1];
-
-				for (int i = 1; i < height - 1; i++)
-					for (int j = 1; j < width - 1; j++) {
-						int colorX = (int) (temp[i][j] * horizontalMask[1][1]
-								+ temp[i - 1][j] * horizontalMask[1 - 1][1] + temp[i][j - 1] * horizontalMask[1][1 - 1]
-								+ temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
-								+ temp[i + 1][j] * horizontalMask[1 + 1][1] + temp[i][j + 1] * horizontalMask[1][1 + 1]
-								+ temp[i + 1][j + 1] * horizontalMask[1 + 1][1 + 1]
-								+ temp[i - 1][j + 1] * horizontalMask[1 - 1][1 + 1]
-								+ temp[i + 1][j - 1] * horizontalMask[1 + 1][1 - 1]);
-
-						int colorY = (int) (temp[i][j] * verticalMask[1][1] + temp[i - 1][j] * verticalMask[1 - 1][1]
-								+ temp[i][j - 1] * verticalMask[1][1 - 1]
-								+ temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
-								+ temp[i + 1][j] * verticalMask[1 + 1][1] + temp[i][j + 1] * verticalMask[1][1 + 1]
-								+ temp[i + 1][j + 1] * verticalMask[1 + 1][1 + 1]
-								+ temp[i - 1][j + 1] * verticalMask[1 - 1][1 + 1]
-								+ temp[i + 1][j - 1] * verticalMask[1 + 1][1 - 1]);
-						picture[i][j] = Color.HSBtoRGB((int)Math.toDegrees(Math.atan2(colorY, colorX))/360f, 1f, 1f);
-					}
-				resetPicture();
-			}
-		}));
-		
-		fun.add(menuFunction("Colored Sobel", new ActionListener() {
-			private float[][] horizontalMask = new float[][] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
-			private float[][] verticalMask = new float[][] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
-
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				luminocity();
-				int[][] temp = new int[picture.length][picture[0].length];
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						temp[i][j] = getPixelArray(picture[i][j])[1];
-
-				for (int i = 1; i < height - 1; i++)
-					for (int j = 1; j < width - 1; j++) {
-						int colorX = (int) (temp[i][j] * horizontalMask[1][1]
-								+ temp[i - 1][j] * horizontalMask[1 - 1][1] + temp[i][j - 1] * horizontalMask[1][1 - 1]
-								+ temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
-								+ temp[i + 1][j] * horizontalMask[1 + 1][1] + temp[i][j + 1] * horizontalMask[1][1 + 1]
-								+ temp[i + 1][j + 1] * horizontalMask[1 + 1][1 + 1]
-								+ temp[i - 1][j + 1] * horizontalMask[1 - 1][1 + 1]
-								+ temp[i + 1][j - 1] * horizontalMask[1 + 1][1 - 1]);
-
-						int colorY = (int) (temp[i][j] * verticalMask[1][1] + temp[i - 1][j] * verticalMask[1 - 1][1]
-								+ temp[i][j - 1] * verticalMask[1][1 - 1]
-								+ temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
-								+ temp[i + 1][j] * verticalMask[1 + 1][1] + temp[i][j + 1] * verticalMask[1][1 + 1]
-								+ temp[i + 1][j + 1] * verticalMask[1 + 1][1 + 1]
-								+ temp[i - 1][j + 1] * verticalMask[1 - 1][1 + 1]
-								+ temp[i + 1][j - 1] * verticalMask[1 + 1][1 - 1]);
-						
-						int color = (int) Math.sqrt(colorX * colorX + colorY * colorY);
-						if(color > 25)
-							picture[i][j] = Color.HSBtoRGB((int)Math.toDegrees(Math.atan2(colorY, colorX))/360f, 1f, 1f);
-						else
-							picture[i][j] = getPixels(new int[] { 255, color, color, color });
-					}
-				resetPicture();
-			}
+					int colorY = (int) (temp[i][j] * verticalMask[1][1] + temp[i - 1][j] * verticalMask[1 - 1][1]
+							+ temp[i][j - 1] * verticalMask[1][1 - 1]
+							+ temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
+							+ temp[i + 1][j] * verticalMask[1 + 1][1] + temp[i][j + 1] * verticalMask[1][1 + 1]
+							+ temp[i + 1][j + 1] * verticalMask[1 + 1][1 + 1]
+							+ temp[i - 1][j + 1] * verticalMask[1 - 1][1 + 1]
+							+ temp[i + 1][j - 1] * verticalMask[1 + 1][1 - 1]);
+					picture[i][j] = Color.HSBtoRGB((int) Math.toDegrees(Math.atan2(colorY, colorX)) / 360f, 1f, 1f);
+				}
+			resetPicture();
 		}));
 
-		fun.add(menuFunction("Gaussian Blur", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				blur(5);
-				resetPicture();
-			}
+		edgeDetection.add(menuFunction("Colored Sobel", (ActionEvent ae) -> {
+			float[][] horizontalMask = new float[][] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
+			float[][] verticalMask = new float[][] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+			luminocity();
+			int[][] temp = new int[picture.length][picture[0].length];
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					temp[i][j] = getPixelArray(picture[i][j])[1];
+
+			for (int i = 1; i < height - 1; i++)
+				for (int j = 1; j < width - 1; j++) {
+					int colorX = (int) (temp[i][j] * horizontalMask[1][1] + temp[i - 1][j] * horizontalMask[1 - 1][1]
+							+ temp[i][j - 1] * horizontalMask[1][1 - 1]
+							+ temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
+							+ temp[i + 1][j] * horizontalMask[1 + 1][1] + temp[i][j + 1] * horizontalMask[1][1 + 1]
+							+ temp[i + 1][j + 1] * horizontalMask[1 + 1][1 + 1]
+							+ temp[i - 1][j + 1] * horizontalMask[1 - 1][1 + 1]
+							+ temp[i + 1][j - 1] * horizontalMask[1 + 1][1 - 1]);
+
+					int colorY = (int) (temp[i][j] * verticalMask[1][1] + temp[i - 1][j] * verticalMask[1 - 1][1]
+							+ temp[i][j - 1] * verticalMask[1][1 - 1] + temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
+							+ temp[i + 1][j] * verticalMask[1 + 1][1] + temp[i][j + 1] * verticalMask[1][1 + 1]
+							+ temp[i + 1][j + 1] * verticalMask[1 + 1][1 + 1]
+							+ temp[i - 1][j + 1] * verticalMask[1 - 1][1 + 1]
+							+ temp[i + 1][j - 1] * verticalMask[1 + 1][1 - 1]);
+
+					int color = (int) Math.sqrt(colorX * colorX + colorY * colorY);
+					if (color > 25)
+						picture[i][j] = Color.HSBtoRGB((int) Math.toDegrees(Math.atan2(colorY, colorX)) / 360f, 1f, 1f);
+					else
+						picture[i][j] = getPixels(new int[] { 255, color, color, color });
+				}
+			resetPicture();
 		}));
-		
-		fun.add(menuFunction("More Edges", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				int[][] temp = new int[picture.length][picture[0].length];
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						temp[i][j] = picture[i][j];
-				
-				blur(5);
-				sobel();
-				
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						temp[i][j] -= picture[i][j];
-				
-				for (int i = 0; i < height; i++)
-					for (int j = 0; j < width; j++)
-						picture[i][j] = temp[i][j];
-				resetPicture();
-			}
+
+		JMenu blurs = new JMenu("Blur");
+		fun.add(blurs);
+
+		blurs.add(menuFunction("Blur", (ActionEvent ae) -> {
+			float[][] mask = new float[][] { { 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f },
+					{ 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f }, { 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f },
+					{ 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f }, { 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f, 1 / 25f } };
+			detectEdges(mask);
+			resetPicture();
+		}));
+
+		blurs.add(menuFunction("Gaussian Blur", (ActionEvent ae) -> {
+			blur(5);
+			resetPicture();
+		}));
+
+		fun.add(menuFunction("More Edges", (ActionEvent ae) -> {
+			int[][] temp = new int[picture.length][picture[0].length];
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					temp[i][j] = picture[i][j];
+
+			blur(5);
+			sobel();
+
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					temp[i][j] -= picture[i][j];
+
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+					picture[i][j] = temp[i][j];
+			resetPicture();
+		}));
+
+		fun.add(menuFunction("Add Edges", (ActionEvent ae) -> {
+			addEdges();
+			resetPicture();
+		}));
+
+		fun.add(menuFunction("Subtract Edges", (ActionEvent ae) -> {
+			subEdges();
+			resetPicture();
+		}));
+
+		fun.add(menuFunction("Abstractify", (ActionEvent ae) -> {
+			addEdges();
+			resetPicture();
+			subEdges();
+			resetPicture();
+			addEdges();
+			resetPicture();
+			subEdges();
+			resetPicture();
+			addEdges();
+			resetPicture();
+			subEdges();
+			resetPicture();
 		}));
 		
-		fun.add(menuFunction("Add Edges", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				addEdges();
-				resetPicture();
-			}
+		fun.add(menuFunction("Histogram", (ActionEvent ae) -> {
+			histogram();
 		}));
 		
-		fun.add(menuFunction("Subtract Edges", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				subEdges();
-				resetPicture();
-			}
+		fun.add(menuFunction("Color Equalization", (ActionEvent ae) -> {
+			colorCorrection();
+			resetPicture();
 		}));
-		
-		fun.add(menuFunction("Abstractify", new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				addEdges();
-				resetPicture();
-				subEdges();
-				resetPicture();
-				addEdges();
-				resetPicture();
-				subEdges();
-				resetPicture();
-				addEdges();
-				resetPicture();
-				subEdges();
-				resetPicture();
-			}
-		}));
-		
+
 		return fun;
 	}
-	
-	private void subEdges (){
+
+	private void subEdges() {
 		int[][] temp = new int[picture.length][picture[0].length];
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				temp[i][j] = picture[i][j];
-		
+
 		blur(5);
 		sobel();
-		
+
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				int[] rgba = getPixelArray(temp[i][j]);
 				int[] rgba2 = getPixelArray(picture[i][j]);
-				for(int k = 1; k < rgba.length; k++){
+				for (int k = 1; k < rgba.length; k++) {
 					rgba[k] -= rgba2[k];
-					if(rgba[k] < 0)
-						rgba[k]=0;
+					if (rgba[k] < 0)
+						rgba[k] = 0;
 				}
 				temp[i][j] = getPixels(rgba);
 			}
-		
+
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				picture[i][j] = temp[i][j];
 	}
-	
-	private void addEdges () {
+
+	private void addEdges() {
 		int[][] temp = new int[picture.length][picture[0].length];
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				temp[i][j] = picture[i][j];
-		
+
 		blur(5);
 		sobel();
-		
+
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				int[] rgba = getPixelArray(temp[i][j]);
 				int[] rgba2 = getPixelArray(picture[i][j]);
-				for(int k = 1; k < rgba.length; k++){
+				for (int k = 1; k < rgba.length; k++) {
 					rgba[k] += rgba2[k];
-					if(rgba[k] > 255)
-						rgba[k]=255;
+					if (rgba[k] > 255)
+						rgba[k] = 255;
 				}
 				temp[i][j] = getPixels(rgba);
 			}
-		
+
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				picture[i][j] = temp[i][j];
@@ -645,19 +614,44 @@ class IMP {
 		resetPicture();
 	}
 
+	private void detectEdges(float[][] mask) {
+		int[][] temp = new int[picture.length][picture[0].length];
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				temp[i][j] = getPixelArray(picture[i][j])[1];
+
+		int maskWidth = (int) Math.floor(mask.length / 2);
+		int maskHeight = (int) Math.floor(mask[0].length / 2);
+
+		for (int i = maskHeight; i < height - maskHeight; i++)
+			for (int j = maskWidth; j < width - maskWidth; j++) {
+				int sum = 0;
+				for (int m = -maskWidth; m <= maskWidth; m++)
+					for (int k = -maskHeight; k <= maskHeight; k++)
+						sum += temp[i - m][j - k] * mask[maskWidth - m][maskHeight - k];
+				if (sum < 0)
+					sum = 0;
+				if (sum > 255)
+					sum = 255;
+				picture[i][j] = getPixels(new int[] { 255, sum, sum, sum });
+			}
+	}
+
 	private void blur(float amt) {
 		GaussianFilter gf = new GaussianFilter(5f);
-		BufferedImage in = new BufferedImage(img.getImage().getWidth(null), img.getImage().getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage in = new BufferedImage(img.getImage().getWidth(null), img.getImage().getHeight(null),
+				BufferedImage.TYPE_INT_ARGB);
 		
 		Image currentImage = toolkit.createImage(new MemoryImageSource(width, height, pixels, 0, width));
-		
+
 		Graphics2D bGr = in.createGraphics();
-	    bGr.drawImage(currentImage, 0, 0, null);
-	    bGr.dispose();
-		
-		BufferedImage out = new BufferedImage(img.getImage().getWidth(null), img.getImage().getHeight(null), BufferedImage.TYPE_INT_ARGB);
+		bGr.drawImage(currentImage, 0, 0, null);
+		bGr.dispose();
+
+		BufferedImage out = new BufferedImage(img.getImage().getWidth(null), img.getImage().getHeight(null),
+				BufferedImage.TYPE_INT_ARGB);
 		gf.filter(in, out);
-		
+
 		PixelGrabber pg = new PixelGrabber(out, 0, 0, width, height, pixels, 0, width);
 		try {
 			pg.grabPixels();
@@ -666,27 +660,87 @@ class IMP {
 			return;
 		}
 		turnTwoDimensional();
-//		int[][] temp = new int[picture.length][picture[0].length];
-//		for (int i = 0; i < height; i++)
-//			for (int j = 0; j < width; j++)
-//				temp[i][j] = getPixelArray(picture[i][j])[1];
-//		
-//		for (int i = 1; i < height - 1; i++)
-//			for (int j = 1; j < width - 1; j++) {
-//				picture[i][j] = (int)(temp[i-1][j] * 1/9f + 
-//						temp[i-1][j-1] * 1/9f + 
-//						temp[i][j-1] * 1/9f + 
-//						temp[i][j] * 1/9f + 
-//						temp[i+1][j] * 1/9f + 
-//						temp[i-1][j+1] * 1/9f + 
-//						temp[i-1][j+1] * 1/9f + 
-//						temp[i+1][j-1] * 1/9f + 
-//						temp[i][j+1] * 1/9f);
-//			}
 		resetPicture();
 	}
 	
-	private void sobel (){
+	private float max = 0;
+	private void histogram (){
+		JFrame histogramFrame = new JFrame();
+		int histWidth = 768;
+		int histHeight = 600;
+		histogramFrame.getContentPane().setPreferredSize(new Dimension(histWidth, 600));
+//		histogramFrame.setPrefferedSize(histWidth, 600);
+		histogramFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		
+		//get count
+		max = 0;
+		int[][] count = new int[3][256];
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++){
+				int[] color = getPixelArray(picture[i][j]);
+				for(int k = 0; k < 3; k++)
+					if(count[k][color[k+1]]++ > max) max = count[k][color[k+1]];
+			}
+		System.out.println(max);
+		JPanel renderPanel = new JPanel(){
+			@Override
+			public void paintComponent(Graphics g){
+				g.setColor(Color.DARK_GRAY);
+				g.fillRect(0, 0, histWidth/3, 600);
+				g.fillRect(histWidth/3, 0, 2*histWidth/3, 600);
+				g.fillRect(2*histWidth/3, 0, histWidth, 600);
+				
+				
+				for(int i = 0; i < histWidth; i++) {
+					int r = i < histWidth/3 ? i : i < 2*histWidth/3 ? 0 : 0;
+					int gr = i < histWidth/3 ? 0 : i < 2*histWidth/3 ? i%256 : 0;
+					int b = i < histWidth/3 ? 0 : i < 2*histWidth/3 ? 0 : i%256;
+					g.setColor(new Color(r,gr,b));
+					g.drawLine(i, histHeight, i, (int)(histHeight-histHeight*count[i < histWidth/3 ? 0 : i < 2*histWidth/3 ? 1 : 2][i%256]/max));
+				}
+			}
+		};
+		renderPanel.setSize(new Dimension(histWidth,600));
+		histogramFrame.add(renderPanel);
+		histogramFrame.pack();
+		histogramFrame.setVisible(true);
+		histogramFrame.setLocationRelativeTo(null);
+	}
+	
+	private void colorCorrection (){
+		int[][] count = new int[3][256];
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++){
+				int[] color = getPixelArray(picture[i][j]);
+				for(int k = 0; k < 3; k++)
+					if(count[k][color[k+1]]++ > max) max = count[k][color[k+1]];
+			}
+		
+		float[] px = new float[256];
+		int sum = 0;
+		for(int j = 0; j < 3; j++) {
+			sum = 0;
+			for(int i = 0; i < 255; i++) {
+				sum+=count[j][i];
+				px[i] = sum * 255 / (height * width);
+			}
+		}//
+		//https://www.youtube.com/watch?v=FLk9677fSYc
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++) {
+				int[] argb = getPixelArray(picture[i][j]);
+				for(int k = 0; k < 3; k++) {
+					argb[k+1] = clamp((int)px[argb[k+1]], 0, 255);
+					picture[i][j] = getPixels(argb);
+				}
+			}
+	}
+
+	private int clamp(int value, int min, int max){
+		return value < min ? min : value > max ? max : value;
+	}
+	
+	private void sobel() {
 		float[][] horizontalMask = new float[][] { { -1, 0, 1 }, { -2, 0, 2 }, { -1, 0, 1 } };
 		float[][] verticalMask = new float[][] { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
 		luminocity();
@@ -697,17 +751,15 @@ class IMP {
 
 		for (int i = 1; i < height - 1; i++)
 			for (int j = 1; j < width - 1; j++) {
-				int colorX = (int) (temp[i][j] * horizontalMask[1][1]
-						+ temp[i - 1][j] * horizontalMask[1 - 1][1] + temp[i][j - 1] * horizontalMask[1][1 - 1]
-						+ temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
+				int colorX = (int) (temp[i][j] * horizontalMask[1][1] + temp[i - 1][j] * horizontalMask[1 - 1][1]
+						+ temp[i][j - 1] * horizontalMask[1][1 - 1] + temp[i - 1][j - 1] * horizontalMask[1 - 1][1 - 1]
 						+ temp[i + 1][j] * horizontalMask[1 + 1][1] + temp[i][j + 1] * horizontalMask[1][1 + 1]
 						+ temp[i + 1][j + 1] * horizontalMask[1 + 1][1 + 1]
 						+ temp[i - 1][j + 1] * horizontalMask[1 - 1][1 + 1]
 						+ temp[i + 1][j - 1] * horizontalMask[1 + 1][1 - 1]);
 
 				int colorY = (int) (temp[i][j] * verticalMask[1][1] + temp[i - 1][j] * verticalMask[1 - 1][1]
-						+ temp[i][j - 1] * verticalMask[1][1 - 1]
-						+ temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
+						+ temp[i][j - 1] * verticalMask[1][1 - 1] + temp[i - 1][j - 1] * verticalMask[1 - 1][1 - 1]
 						+ temp[i + 1][j] * verticalMask[1 + 1][1] + temp[i][j + 1] * verticalMask[1][1 + 1]
 						+ temp[i + 1][j + 1] * verticalMask[1 + 1][1 + 1]
 						+ temp[i - 1][j + 1] * verticalMask[1 - 1][1 + 1]
@@ -766,13 +818,12 @@ class IMP {
 			} else
 				return;
 		}
-		
 	}
-	
-	private void loadImage(File path){
+
+	private void loadImage(File path) {
 		pic = path;
 		img = new ImageIcon(pic.getPath());
-		
+
 		initWidth = width = img.getIconWidth();
 		initHeight = height = img.getIconHeight();
 
@@ -796,6 +847,7 @@ class IMP {
 		turnTwoDimensional();
 
 		mp.revalidate();
+		label.setText("");
 	}
 
 	/*
@@ -841,19 +893,19 @@ class IMP {
 				pixels[i * width + j] = picture[i][j];
 		Image img2 = toolkit.createImage(new MemoryImageSource(width, height, pixels, 0, width));
 
-		if(history.size() <= historySize)
+		if (history.size() <= historySize)
 			history.add(img2);
 		else {
 			history.removeFirst();
 			history.add(img2);
 		}
-		
+
 		label.setIcon(new ImageIcon(img2));
 		mp.revalidate();
 	}
-	
-	private void setPicture (Image img){
-		
+
+	private void setPicture(Image img) {
+
 		PixelGrabber pg = new PixelGrabber(img, 0, 0, width, height, pixels, 0, width);
 		try {
 			pg.grabPixels();
@@ -862,8 +914,7 @@ class IMP {
 			return;
 		}
 		turnTwoDimensional();
-		
-		
+
 		label.setIcon(new ImageIcon(img));
 		mp.revalidate();
 	}
