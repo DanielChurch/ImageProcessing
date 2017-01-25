@@ -724,8 +724,21 @@ class IMP {
 				sum+=count[j][i];
 				px[i] = sum * 255 / (height * width);
 			}
+<<<<<<< HEAD
+<<<<<<< HEAD
 		}//
 		//https://www.youtube.com/watch?v=FLk9677fSYc
+=======
+		}
+<<<<<<< HEAD
+		
+>>>>>>> d377524... Update
+=======
+=======
+		}//
+>>>>>>> 24f2e12... update
+		//https://www.youtube.com/watch?v=FLk9677fSYc
+>>>>>>> 44c7b63... Update
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				int[] argb = getPixelArray(picture[i][j]);
